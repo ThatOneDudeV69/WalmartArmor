@@ -1,0 +1,16 @@
+{
+  "name": "roblox-auth-worker",
+  "version": "1.0.0",
+  "description": "Roblox key system.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev src/index.js",
+    "build": "wrangler publish"
+  },
+  "dependencies": {
+    "hono": "^3.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/wrangler": "^3.0.0"
+  }
+}
