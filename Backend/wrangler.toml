@@ -1,0 +1,4 @@
+name = "keysystem"
+main = "src/index.js"
+compatibility_date = "2025-12-01"
+type = "javascript"
