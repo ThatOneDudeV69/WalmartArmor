@@ -4,7 +4,7 @@ import { sha256 } from '../utils/sha256.js'
 
 const app = new Hono()
 
-app.post('/', async (c) => {
+app.get('/', async (c) => {
   const headers = c.req.headers
   const clientTime = headers.get('clienttime')
   const clientKey = headers.get('clientkey')
