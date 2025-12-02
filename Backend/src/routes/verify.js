@@ -1,18 +1,16 @@
-
 import { Hono } from 'hono'
 import { sha256 } from '../utils/sha256.js'
 
 const app = new Hono()
 
 app.get('/', async (c) => {
-  const headers = c.req.headers
-  const clientTime = headers.get('clienttime')
-  const clientKey = headers.get('clientkey')
-  const clientNonce = headers.get('clientnonce')
-  const externalSignature = headers.get('externalsignature')
+  const clientTime = c.req.header('clienttime')
+  const clientKey = c.req.header('clientkey')
+  const clientNonce = c.req.header('clientnonce')
+  const externalSignature = c.req.header('externalsignature')
 
   let fingerprint = null
-  for (const [k, v] of headers.entries()) {
+  for (const [k, v] of c.req.raw.headers.entries()) {
     if (k.toLowerCase().endsWith('-fingerprint')) {
       fingerprint = v
       break
@@ -23,7 +21,15 @@ app.get('/', async (c) => {
     return c.json({ code: "MISSING_INFO" }, 200)
   }
 
-  const expected = await sha256(clientNonce + c.env.SECRET1 + clientKey + c.env.SECRET2 + clientTime + c.env.SECRET3)
+  const expected = await sha256(
+    clientNonce +
+    c.env.SECRET1 +
+    clientKey +
+    c.env.SECRET2 +
+    clientTime +
+    c.env.SECRET3
+  )
+
   if (expected !== externalSignature) {
     return c.json({ code: "SECURITY_ERROR" }, 200)
   }
