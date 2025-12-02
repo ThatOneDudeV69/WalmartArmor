@@ -32,7 +32,7 @@ app.get('/', async (c) => {
     VALUES (?, '', 0, 0, 1, 0, ?, '')
   `).bind(key, expiry).run()
 
-  return c.json({ key }, 200)
+  return c.text(key, 200)
 })
 
 export default app
