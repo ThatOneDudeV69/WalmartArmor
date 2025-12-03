@@ -5,7 +5,7 @@ const app = new Hono()
 app.use('*', async (c, next) => {
   const apiKey = c.req.header('Authorization')
   if (!apiKey || apiKey !== c.env.API_KEY) {
-    return c.json({ code: 'INVALID_API_KEY' }, 200)
+    return c.json({ code: 'INVALID_API_KEY' }, 403)
   }
   await next()
 })
@@ -71,23 +71,25 @@ app.post('/users', async (c) => {
     const users = (res && res.results) ? res.results : []
     return c.json({ users }, 200)
   } catch (err) {
-    return c.json({ code: 'ERROR', message: String(err) }, 200)
+    return c.json({ code: 'ERROR', message: String(err) }, 500)
   }
 })
 
+// Reset HWID
 app.post('/users/resethwid', async (c) => {
   const body = await c.req.json().catch(() => ({}))
   const user_key = body.user_key
 
   if (!user_key) {
-    return c.json({ code: 'MISSING_USER_KEY' }, 200)
+    return c.json({ code: 'MISSING_USER_KEY' }, 400)
   }
 
   try {
     const db = c.env.DB
-    const row = await db.prepare('SELECT key FROM keys WHERE key = ?').bind(String(user_key)).first()
+    const row = await db.prepare('SELECT key, total_executions FROM keys WHERE key = ?')
+      .bind(String(user_key)).first()
     if (!row) {
-      return c.json({ code: 'KEY_INVALID' }, 200)
+      return c.json({ code: 'KEY_INVALID' }, 404)
     }
 
     await db.prepare('UPDATE keys SET hwid = ?, reset_state = ?, total_executions = ? WHERE key = ?')
@@ -96,36 +98,35 @@ app.post('/users/resethwid', async (c) => {
 
     return c.json({ code: 'HWID_RESET' }, 200)
   } catch (err) {
-    return c.json({ code: 'ERROR', message: String(err) }, 200)
+    return c.json({ code: 'ERROR', message: String(err) }, 500)
   }
 })
 
 app.post('/users/linkdiscord', async (c) => {
-  const apiKey = c.req.headers.get('Authorization')
-  if (!apiKey || apiKey !== c.env.API_KEY) {
-    return c.json({ code: 'INVALID_API_KEY' }, 200)
-  }
-
   const body = await c.req.json()
   const user_key = body.user_key
   const discord_id = body.discord_id
 
   if (!user_key || !discord_id) {
-    return c.json({ code: 'MISSING_INFO' }, 200)
+    return c.json({ code: 'MISSING_INFO' }, 400)
   }
 
-  const db = c.env.DB
-  const row = await db.prepare('SELECT discord_id FROM keys WHERE key = ?')
-    .bind(String(user_key)).first()
+  try {
+    const db = c.env.DB
+    const row = await db.prepare('SELECT discord_id FROM keys WHERE key = ?')
+      .bind(String(user_key)).first()
 
-  if (!row) return c.json({ code: 'KEY_INVALID' }, 200)
-  if (row.discord_id) return c.json({ code: 'ALREADY_LINKED' }, 200)
+    if (!row) return c.json({ code: 'KEY_INVALID' }, 404)
+    if (row.discord_id) return c.json({ code: 'ALREADY_LINKED' }, 409)
 
-  await db.prepare('UPDATE keys SET discord_id = ? WHERE key = ?')
-    .bind(String(discord_id), String(user_key))
-    .run()
+    await db.prepare('UPDATE keys SET discord_id = ? WHERE key = ?')
+      .bind(String(discord_id), String(user_key))
+      .run()
 
-  return c.json({ code: 'DISCORD_LINKED' }, 200)
+    return c.json({ code: 'DISCORD_LINKED' }, 200)
+  } catch (err) {
+    return c.json({ code: 'ERROR', message: String(err) }, 500)
+  }
 })
 
 export default app
