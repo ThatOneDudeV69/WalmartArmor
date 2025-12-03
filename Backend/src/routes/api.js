@@ -161,4 +161,29 @@ app.post('/users/blacklist', async (c) => {
   }
 })
 
+app.get('/users/unblacklist', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const user_key = body.user_key
+
+  if (!user_key) {
+    return c.json({ code: 'MISSING_USER_KEY' }, 400)
+  }
+
+  try {
+    const db = c.env.DB
+    const row = await db.prepare('SELECT key FROM keys WHERE key = ?')
+      .bind(String(user_key)).first()
+
+    if (!row) return c.json({ code: 'KEY_INVALID' }, 404)
+
+    await db.prepare('UPDATE keys SET blacklisted = ?, expiry = ? WHERE key = ?')
+      .bind(false, 0, String(user_key))
+      .run()
+
+    return c.json({ code: 'KEY_UNBLACKLISTED' }, 200)
+  } catch (err) {
+    return c.json({ code: 'ERROR', message: String(err) }, 500)
+  }
+})
+
 export default app
