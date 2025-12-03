@@ -129,4 +129,36 @@ app.post('/users/linkdiscord', async (c) => {
   }
 })
 
+app.post('/users/blacklist', async (c) => {
+  const body = await c.req.json().catch(() => ({}))
+  const user_key = body.user_key
+  let ban_expire = body.ban_expire
+
+  if (!user_key) {
+    return c.json({ code: 'MISSING_USER_KEY' }, 400)
+  }
+
+  if (ban_expire === undefined || ban_expire === null || isNaN(Number(ban_expire))) {
+    ban_expire = -1
+  } else {
+    ban_expire = Number(ban_expire)
+  }
+
+  try {
+    const db = c.env.DB
+    const row = await db.prepare('SELECT key FROM keys WHERE key = ?')
+      .bind(String(user_key)).first()
+
+    if (!row) return c.json({ code: 'KEY_INVALID' }, 404)
+
+    await db.prepare('UPDATE keys SET blacklisted = ?, expiry = ? WHERE key = ?')
+      .bind(true, ban_expire, String(user_key))
+      .run()
+
+    return c.json({ code: 'KEY_BLACKLISTED', ban_expire }, 200)
+  } catch (err) {
+    return c.json({ code: 'ERROR', message: String(err) }, 500)
+  }
+})
+
 export default app
