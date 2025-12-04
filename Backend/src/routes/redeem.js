@@ -21,6 +21,13 @@ app.get('/', async (c) => {
   const data = await res.json()
   if (!data.valid) return c.text('Invalid token', 403)
 
+  const allowedLinkId = Number(c.env.WORKINK_LINK_ID)
+  const tokenLinkId = Number(data.info?.linkId)
+
+  if (!allowedLinkId || allowedLinkId !== tokenLinkId) {
+    return c.text('Invalid link origin', 403)
+  }
+
   const key = generateKey(32)
   const now = Math.floor(Date.now() / 1000)
   const offsetHours = Number(c.env.KEY_TIME_OFFSET) || 48
