@@ -68,7 +68,7 @@ The /verify endpoint expects specific headers to prevent request spoofing.
  * clientnonce: A random unique string for the session.
  * externalsignature: A SHA-256 hash of the following concatenation:
    clientnonce + SECRET1 + clientkey + SECRET2 + clienttime + SECRET3
- * X-Fingerprint: (Or any header ending in -fingerprint) The hardware ID of the user (Executers automatically add this field).
+ * X-Fingerprint: Where X is the name of the executer (Or any header ending in -fingerprint) The hardware ID of the user (Executers automatically add this field).
 ### Validation Flow:
  1. The server reconstructs the hash using its internal secrets.
  2. If the signature matches, it checks if the key is expired or blacklisted.
