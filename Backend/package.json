@@ -4,13 +4,13 @@
   "description": "Roblox key system.",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev src/index.js",
-    "build": "wrangler publish"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
   },
   "dependencies": {
-    "hono": "^3.0.0"
+    "hono": "^4.0.0"
   },
   "devDependencies": {
-    "@cloudflare/wrangler": "^3.0.0"
+    "wrangler": "^3.0.0"
   }
 }
